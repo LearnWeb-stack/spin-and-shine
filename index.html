@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spin to Answer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff7ec; --panel:#ffffff; --ink:#2b2340; --muted:#7c7392; --line:#f0e4d2;
+  --accent:#ff5d73; --accent2:#6c5ce7; --good:#1dbf73; --warn:#ff9f1c; --bad:#ef476f;
+  --shadow:0 10px 30px rgba(60,40,90,.12); --radius:18px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{
+  font-family:'Fredoka',system-ui,-apple-system,Segoe UI,sans-serif; color:var(--ink);
+  background:var(--bg);
+  background-image:radial-gradient(circle at 10% 10%,#ffe3ec 0,transparent 35%),
+                   radial-gradient(circle at 90% 20%,#e3e0ff 0,transparent 35%),
+                   radial-gradient(circle at 50% 100%,#d9fbe9 0,transparent 40%);
+  min-height:100vh;
+}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:none;border-radius:12px;padding:.55em 1em;font-weight:500;background:#f3eefc;transition:transform .1s,background .2s,opacity .2s}
+button:hover{background:#e8e0fa}
+button:active{transform:scale(.96)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--accent2);color:#fff}
+button.primary:hover{background:#5a4bd6}
+button.danger{background:#ffe4ea;color:#c2254b}
+button.danger:hover{background:#ffd3dd}
+button.small{padding:.35em .7em;font-size:.9rem}
+button.qa-btn{background:var(--accent2);color:#fff;font-weight:600}
+button.qa-btn:hover{background:#5a4bd6}
+
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;padding:16px 24px}
+.brand{display:flex;align-items:center;gap:10px;font-size:1.6rem;font-weight:700}
+.brand .logo{width:40px;height:40px;border-radius:50%;background:conic-gradient(#ff5d73 0 25%,#ffbe0b 0 50%,#1dbf73 0 75%,#6c5ce7 0);box-shadow:inset 0 0 0 6px #fff,var(--shadow)}
+.header-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+main{display:grid;grid-template-columns:300px minmax(0,1fr) 360px;grid-template-areas:"side stage answer";gap:20px;padding:0 24px 32px;max-width:1600px;margin:0 auto;align-items:start}
+.side{grid-area:side}
+.stage{grid-area:stage}
+.answer{grid-area:answer}
+@media (max-width:1250px){
+  main{grid-template-columns:300px minmax(0,1fr);grid-template-areas:"side stage" "side answer"}
+}
+@media (max-width:820px){
+  main{grid-template-columns:1fr;grid-template-areas:"stage" "answer" "side";padding:0 16px 24px}
+  header{padding:14px 16px}
+}
+
+.panel{background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.side{display:flex;flex-direction:column;gap:16px}
+.panel h2{margin:0 0 10px;font-size:1.1rem;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.count{background:#f3eefc;color:var(--accent2);border-radius:999px;padding:0 10px;font-size:.9rem}
+
+.class-row{display:flex;gap:6px;flex-wrap:wrap}
+.class-row select{flex:1;min-width:120px;padding:.5em .7em;border-radius:12px;border:2px solid var(--line);background:#fff}
+
+textarea,input[type=text]{width:100%;border:2px solid var(--line);border-radius:12px;padding:10px;background:#fffdf9}
+textarea{min-height:90px;resize:vertical}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent2)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.hint{color:var(--muted);font-size:.85rem}
+
+.list{list-style:none;margin:0;padding:0;max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.list li{display:flex;align-items:center;gap:10px;padding:6px 8px 6px 10px;border-radius:10px;background:#fbf8ff}
+.list li .dot{width:12px;height:12px;border-radius:50%;flex:none}
+.list li span.name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list li button{padding:.15em .5em;background:transparent;color:var(--muted)}
+.list li button:hover{background:#ffe4ea;color:#c2254b}
+.empty{color:var(--muted);font-size:.95rem;padding:6px 2px}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:#eafaf2;color:#15885a;border-radius:999px;padding:.25em .75em;font-size:.95rem}
+.chip:hover{background:#d6f5e6}
+
+details summary{cursor:pointer;font-weight:600;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:'⚙️ '}
+.setting{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.setting:last-child{border-bottom:none}
+.setting input[type=number]{width:80px;padding:.35em .5em;border-radius:10px;border:2px solid var(--line)}
+.switch{position:relative;width:46px;height:26px;flex:none}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:#ddd6ea;border-radius:999px;transition:.2s}
+.switch span::after{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch input:checked+span{background:var(--good)}
+.switch input:checked+span::after{transform:translateX(20px)}
+
+/* Wheel stage */
+.stage{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px 16px}
+.wheel-wrap{position:relative;width:min(580px,100%);aspect-ratio:1}
+#wheel{width:100%;height:100%;display:block;filter:drop-shadow(0 18px 30px rgba(60,40,90,.25))}
+.pointer{position:absolute;left:50%;top:-14px;transform:translateX(-50%);width:0;height:0;
+  border-left:22px solid transparent;border-right:22px solid transparent;border-top:44px solid var(--ink);
+  filter:drop-shadow(0 4px 4px rgba(0,0,0,.25));transform-origin:50% 0;z-index:2}
+.pointer.wiggle{animation:wiggle .12s}
+@keyframes wiggle{50%{transform:translateX(-50%) rotate(-14deg)}}
+.hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22%;aspect-ratio:1;border-radius:50%;
+  background:#fff;border:6px solid var(--ink);font-weight:700;font-size:clamp(.9rem,2.2vw,1.5rem);letter-spacing:.04em;padding:0;
+  box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.hub:hover{background:#fff6d6}
+.hub:active{transform:translate(-50%,-50%) scale(.96)}
+.stage-info{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center}
+.big-spin{font-size:1.3rem;padding:.7em 2.2em;border-radius:999px;background:var(--accent);color:#fff;box-shadow:0 8px 20px rgba(255,93,115,.4)}
+.big-spin:hover{background:#f04862}
+.left-label{color:var(--muted);font-size:1.05rem}
+kbd{background:#fff;border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:0 6px;font-size:.85em}
+
+/* Answer side panel */
+.answer{display:flex;flex-direction:column;gap:16px;background:none;box-shadow:none;padding:0}
+.card{background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.qa-card{border-top:6px solid var(--accent2)}
+.qa-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.qa-head strong{font-size:1.05rem}
+.qa-nav{display:flex;gap:4px}
+.qa-nav button{padding:.3em .6em}
+.q-text{font-size:1.35rem;font-weight:500;line-height:1.3;min-height:3.2em;word-break:break-word}
+.q-text.empty-q{font-size:1rem;color:var(--muted);font-weight:400}
+.q-answer{margin-top:10px;background:#eafaf2;color:#15694a;border-radius:12px;padding:10px 12px;font-weight:500;word-break:break-word}
+.q-used{display:inline-block;margin-left:6px;font-size:.8rem;background:#eafaf2;color:#15885a;border-radius:999px;padding:0 8px;vertical-align:middle}
+.own-q{display:none;gap:6px;margin-top:10px}
+.own-q.show{display:flex}
+.own-q input{flex:1;padding:.5em .7em}
+
+.student-card{text-align:center;border-top:6px solid var(--accent)}
+.student-card.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 0 rgba(255,93,115,.7)}100%{box-shadow:0 0 0 22px rgba(255,93,115,0),var(--shadow)}}
+.pick-label{color:var(--muted);font-size:1rem}
+.picked{font-size:clamp(1.8rem,3.2vw,2.6rem);font-weight:700;line-height:1.1;margin:4px 0 12px;color:var(--accent2);word-break:break-word;min-height:1.1em}
+.picked.none{color:#cfc6de}
+.picked.pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.timer{position:relative;width:170px;height:170px;margin:0 auto 12px}
+.timer svg{width:100%;height:100%;transform:rotate(-90deg)}
+.timer .track{stroke:#f1ecf8}
+.timer .prog{transition:stroke .3s;stroke-linecap:round}
+.timer .time{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.8rem;font-weight:700}
+.timer.up .time{color:var(--bad);animation:pulse .6s infinite alternate}
+@keyframes pulse{to{transform:scale(1.12)}}
+.student-card .row{justify-content:center}
+.result-row button{flex:1;min-width:0}
+.btn-correct{background:#dff7ea;color:#118a55}
+.btn-correct:hover{background:#c8f0da}
+.btn-wrong{background:#ffe4ea;color:#c2254b}
+.btn-wrong:hover{background:#ffd3dd}
+.result-note{margin-top:10px;font-weight:600;min-height:1.4em}
+.result-note.ok{color:#118a55}
+.result-note.no{color:#c2254b}
+
+/* Modal (Q/A manager) */
+.overlay{position:fixed;inset:0;background:rgba(30,20,50,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px;backdrop-filter:blur(3px)}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:24px;padding:22px 24px;width:min(760px,100%);max-height:92vh;overflow:auto;box-shadow:0 30px 60px rgba(0,0,0,.3);animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.modal-head h2{margin:0;font-size:1.4rem}
+.tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:2px solid var(--line)}
+.tabs button{background:none;border-radius:10px 10px 0 0;padding:.5em 1em;color:var(--muted)}
+.tabs button.active{background:#f3eefc;color:var(--accent2);font-weight:600}
+.qlist{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:40vh;overflow:auto}
+.qlist li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:10px;background:#fbf8ff}
+.qlist li.current{outline:2px solid var(--accent2)}
+.qlist .qn{color:var(--muted);min-width:1.8em;font-weight:600}
+.qlist .qb{flex:1;min-width:0;word-break:break-word}
+.qlist .qa{color:#15885a;font-size:.9rem}
+.qlist button{padding:.15em .5em;background:transparent;color:var(--muted)}
+.qlist button:hover{background:#ffe4ea;color:#c2254b}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500}
+.tally{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tally span{background:#fbf8ff;border-radius:999px;padding:.2em .8em}
+
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--ink);color:#fff;padding:.7em 1.2em;border-radius:12px;transition:transform .3s;z-index:70}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><div class="logo"></div> Spin to Answer</div>
+  <div class="header-actions">
+    <button class="qa-btn" id="qaBtn" title="Manage questions and see results">❓ Q/A</button>
+    <button id="musicBtn" title="Toggle music">🎵 Music on</button>
+    <button id="fsBtn" title="Full screen for projector">⛶ Full screen</button>
+  </div>
+</header>
+
+<main>
+  <aside class="side">
+    <section class="panel">
+      <h2>🏫 Class</h2>
+      <div class="class-row">
+        <select id="classSelect" aria-label="Choose class"></select>
+        <button class="small" id="newClass" title="New class">＋ New</button>
+        <button class="small" id="renameClass" title="Rename class">✎</button>
+        <button class="small danger" id="deleteClass" title="Delete class">🗑</button>
+      </div>
+      <div class="row">
+        <button class="small" id="exportBtn">⬇ Backup</button>
+        <button class="small" id="importBtn">⬆ Restore</button>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+      </div>
+      <div class="hint" style="margin-top:6px">Saved automatically in this browser.</div>
+    </section>
+
+    <section class="panel">
+      <h2>✏️ Add students</h2>
+      <textarea id="nameInput" placeholder="Type or paste names — one per line, or separated by commas"></textarea>
+      <div class="row">
+        <button class="primary" id="addBtn">Add to wheel</button>
+        <span class="hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>🎡 On the wheel <span class="count" id="wheelCount">0</span></h2>
+      <ul class="list" id="wheelList"></ul>
+      <div class="row">
+        <button class="small" id="shuffleBtn">🔀 Shuffle</button>
+        <button class="small danger" id="clearBtn">Clear all</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>✅ Already picked <span class="count" id="calledCount">0</span></h2>
+      <div class="chips" id="calledList"></div>
+      <div class="row">
+        <button class="small" id="resetBtn">↺ Put everyone back</button>
+      </div>
+      <div class="hint" style="margin-top:6px">Click a name to return it to the wheel.</div>
+    </section>
+
+    <section class="panel">
+      <details>
+        <summary>Settings</summary>
+        <div class="setting"><label for="timerSec">Answer time (seconds)</label><input type="number" id="timerSec" min="5" max="600" step="5"></div>
+        <div class="setting"><span>Remove student after pick</span><label class="switch"><input type="checkbox" id="removeAfter"><span></span></label></div>
+        <div class="setting"><span>Start timer automatically</span><label class="switch"><input type="checkbox" id="autoTimer"><span></span></label></div>
+        <div class="setting"><span>Next question after correct</span><label class="switch"><input type="checkbox" id="autoNextQ"><span></span></label></div>
+        <div class="setting"><span>Random question order</span><label class="switch"><input type="checkbox" id="randomQ"><span></span></label></div>
+        <div class="setting"><span>Background music</span><label class="switch"><input type="checkbox" id="musicToggle"><span></span></label></div>
+        <div class="setting"><label for="volume">Volume</label><input type="range" id="volume" min="0" max="1" step="0.05"></div>
+      </details>
+    </section>
+  </aside>
+
+  <section class="panel stage">
+    <div class="wheel-wrap">
+      <div class="pointer" id="pointer"></div>
+      <canvas id="wheel"></canvas>
+      <button class="hub" id="hubBtn" aria-label="Spin the wheel">SPIN</button>
+    </div>
+    <div class="stage-info">
+      <button class="big-spin" id="spinBtn">🎲 Spin!</button>
+      <span class="left-label" id="leftLabel"></span>
+    </div>
+    <div class="hint"><kbd>Space</kbd> spin · <kbd>T</kbd> timer · <kbd>A</kbd> show answer · <kbd>N</kbd> next question</div>
+  </section>
+
+  <aside class="answer">
+    <section class="card qa-card" id="qaCard">
+      <div class="qa-head">
+        <strong>❓ Question <span id="qNum"></span><span class="q-used" id="qUsed" hidden>answered</span></strong>
+        <div class="qa-nav">
+          <button class="small" id="qPrev" title="Previous question">◀</button>
+          <button class="small" id="qRand" title="Random question">🔀</button>
+          <button class="small" id="qNext" title="Next question">▶</button>
+        </div>
+      </div>
+      <div class="q-text" id="qText"></div>
+      <div class="q-answer" id="qAnswer" hidden></div>
+      <div class="row">
+        <button class="small" id="showAns">👁 Show answer</button>
+        <button class="small" id="ownQBtn">✎ Ask my own</button>
+      </div>
+      <div class="own-q" id="ownQ">
+        <input type="text" id="ownQInput" placeholder="Type a question and press Enter">
+        <button class="small primary" id="ownQGo">Ask</button>
+      </div>
+    </section>
+
+    <section class="card student-card" id="studentCard">
+      <div class="pick-label" id="pickLabel">Spin to choose who answers</div>
+      <div class="picked none" id="pickedName">?</div>
+      <div class="timer" id="timerBox">
+        <svg viewBox="0 0 120 120">
+          <circle class="track" cx="60" cy="60" r="54" fill="none" stroke-width="10"/>
+          <circle class="prog" id="timerRing" cx="60" cy="60" r="54" fill="none" stroke-width="10" stroke="#1dbf73" stroke-dasharray="339.292" stroke-dashoffset="0"/>
+        </svg>
+        <div class="time" id="timerText">30</div>
+      </div>
+      <div class="row">
+        <button class="primary" id="timerToggle">▶ Start</button>
+        <button id="timerReset">↺ Reset</button>
+        <button id="timerAdd">+15s</button>
+      </div>
+      <div class="row result-row">
+        <button class="btn-correct" id="markCorrect">✓ Correct</button>
+        <button class="btn-wrong" id="markWrong">✗ Incorrect</button>
+      </div>
+      <div class="row">
+        <button class="small" id="putBack">↩ Put back on wheel</button>
+      </div>
+      <div class="result-note" id="resultNote"></div>
+    </section>
+  </aside>
+</main>
+
+<!-- Q/A manager -->
+<div class="overlay" id="qaOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="qaTitle">
+    <div class="modal-head">
+      <h2 id="qaTitle">❓ Questions &amp; Answers</h2>
+      <button id="qaClose" aria-label="Close">✕ Close</button>
+    </div>
+    <div class="tabs">
+      <button class="active" data-tab="qTab">Question bank</button>
+      <button data-tab="rTab">Results</button>
+    </div>
+
+    <div id="qTab">
+      <textarea id="qInput" placeholder="One question per line. Add the answer after a | bar (optional):&#10;What is 7 × 8? | 56&#10;Name the largest planet. | Jupiter&#10;Why do leaves change colour in autumn?"></textarea>
+      <div class="row">
+        <button class="primary" id="qAdd">Add questions</button>
+        <button class="small" id="qResetUsed">↺ Mark all unanswered</button>
+        <button class="small danger" id="qClear">Delete all</button>
+      </div>
+      <div class="hint" style="margin-top:6px">Click a question to show it on screen. Questions are saved per class.</div>
+      <ul class="qlist" id="qList"></ul>
+    </div>
+
+    <div id="rTab" hidden>
+      <div class="tally" id="tally"></div>
+      <div style="max-height:45vh;overflow:auto">
+        <table>
+          <thead><tr><th>Time</th><th>Student</th><th>Question</th><th>Result</th></tr></thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+      <div class="row">
+        <button class="small" id="logExport">⬇ Download CSV</button>
+        <button class="small danger" id="logClear">Clear results</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<canvas id="confetti"></canvas>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+const TAU = Math.PI * 2;
+const COLORS = ['#ff5d73','#ffbe0b','#1dbf73','#3a86ff','#8338ec','#fb5607','#06d6a0','#ff006e','#118ab2','#f15bb5'];
+const $ = id => document.getElementById(id);
+
+/* ---------- Storage ---------- */
+const STORE = 'spinToAnswer.v1';
+const DEFAULT_SETTINGS = { timer: 30, removeAfter: true, autoTimer: true, autoNextQ: true, randomQ: false, music: true, volume: 0.6 };
+const newClass = () => ({ students: [], called: [], questions: [], qIndex: 0, log: [] });
+function fixClass(c) {
+  c = c || {};
+  c.students = (c.students || []).map(String);
+  c.called = (c.called || []).map(String);
+  c.questions = (c.questions || []).filter(q => q && q.q).map(q => ({ q: String(q.q), a: String(q.a || ''), used: !!q.used }));
+  c.qIndex = Math.min(Math.max(0, c.qIndex | 0), Math.max(0, c.questions.length - 1));
+  c.log = Array.isArray(c.log) ? c.log : [];
+  return c;
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE));
+    if (d && d.classes && Object.keys(d.classes).length) {
+      d.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings || {});
+      Object.keys(d.classes).forEach(k => d.classes[k] = fixClass(d.classes[k]));
+      if (!d.classes[d.current]) d.current = Object.keys(d.classes)[0];
+      return d;
+    }
+  } catch (e) {}
+  return { classes: { 'My Class': newClass() }, current: 'My Class', settings: { ...DEFAULT_SETTINGS } };
+}
+let data = load();
+function save() { try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) {} }
+const cls = () => data.classes[data.current];
+const S = () => data.settings;
+
+/* ---------- Toast ---------- */
+let toastT;
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ---------- Sound engine (all generated live, no audio files) ---------- */
+const Sound = {
+  ctx: null, master: null, music: null, sfx: null, nb: null,
+  init() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return false;
+      const c = this.ctx = new AC();
+      this.master = c.createGain(); this.master.gain.value = S().volume; this.master.connect(c.destination);
+      this.music = c.createGain(); this.music.gain.value = 0.8; this.music.connect(this.master);
+      this.sfx = c.createGain(); this.sfx.connect(this.master);
+      const len = c.sampleRate * 0.5, buf = c.createBuffer(1, len, c.sampleRate), ch = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+      this.nb = buf;
+    }
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    return true;
+  },
+  setVolume(v) { if (this.master) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, 0.05); },
+  tone(f, t, dur, type = 'square', vol = 0.2, dest) {
+    const c = this.ctx, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(dest || this.sfx);
+    o.start(t); o.stop(t + dur + 0.03);
+  },
+  noise(t, dur, vol, hp, dest) {
+    const c = this.ctx, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = this.nb; f.type = 'highpass'; f.frequency.value = hp;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(dest || this.sfx);
+    s.start(t); s.stop(t + dur + 0.02);
+  },
+  kick(t) {
+    const c = this.ctx, o = c.createOscillator(), g = c.createGain();
+    o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+    g.gain.setValueAtTime(0.55, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(g); g.connect(this.music); o.start(t); o.stop(t + 0.2);
+  },
+  tick() { if (!this.ctx) return; const t = this.ctx.currentTime; this.tone(1700, t, 0.03, 'square', 0.06); this.noise(t, 0.025, 0.08, 3000); },
+  beep() { if (!this.ctx) return; this.tone(880, this.ctx.currentTime, 0.14, 'sine', 0.3); },
+  fanfare() {
+    if (!this.ctx) return; const t = this.ctx.currentTime + 0.02;
+    [[72,0,.14],[76,.12,.14],[79,.24,.14],[84,.36,.7]].forEach(([m,d,l]) => {
+      this.tone(mtof(m), t + d, l, 'square', 0.12); this.tone(mtof(m - 12), t + d, l, 'triangle', 0.2);
+    });
+    [76,79].forEach(m => this.tone(mtof(m), t + .36, .7, 'triangle', 0.1));
+    this.noise(t + .36, .4, .15, 5000);
+  },
+  correct() {
+    if (!this.ctx) return; const t = this.ctx.currentTime + 0.01;
+    [79,84,88,91].forEach((m, i) => this.tone(mtof(m), t + i * 0.08, 0.35, 'triangle', 0.22));
+    this.tone(mtof(96), t + 0.32, 0.5, 'sine', 0.12);
+  },
+  wrong() {
+    if (!this.ctx) return; const t = this.ctx.currentTime;
+    this.tone(mtof(62), t, 0.22, 'square', 0.1); this.tone(mtof(58), t + 0.22, 0.4, 'square', 0.1);
+  },
+  buzzer() {
+    if (!this.ctx) return; const t = this.ctx.currentTime;
+    this.tone(146, t, 0.9, 'sawtooth', 0.18); this.tone(150, t, 0.9, 'sawtooth', 0.18);
+  }
+};
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+
+const SONGS = {
+  // Upbeat, bouncy loop for spinning (C – G – Am – F)
+  spin: {
+    bpm: 148,
+    prog: [[60,'M'],[55,'M'],[57,'m'],[53,'M']],
+    play(s, t, d) {
+      const bar = Math.floor(s / 16) % 4, st = s % 16, [root, q] = this.prog[bar];
+      const iv = q === 'M' ? [0,4,7,12] : [0,3,7,12];
+      const pat = [0,1,2,3,2,1,0,1,0,1,2,3,3,2,1,2];
+      Sound.tone(mtof(root + 12 + iv[pat[st]]), t, d * 0.9, 'square', 0.045, Sound.music);
+      if (st % 2 === 0) Sound.tone(mtof(root - 24 + (st % 4 === 2 ? 12 : 0)), t, d * 1.8, 'triangle', 0.22, Sound.music);
+      if (st % 4 === 0) Sound.kick(t);
+      if (st % 4 === 2) Sound.noise(t, 0.04, 0.05, 7000, Sound.music);
+      if (st === 4 || st === 12) Sound.noise(t, 0.12, 0.1, 1500, Sound.music);
+    }
+  },
+  // Gentle "thinking" loop while the timer runs (Am – F – C – G)
+  think: {
+    bpm: 92,
+    prog: [[57,'m'],[53,'M'],[60,'M'],[55,'M']],
+    play(s, t, d) {
+      const bar = Math.floor(s / 16) % 4, st = s % 16, [root, q] = this.prog[bar];
+      const iv = q === 'M' ? [0,4,7,12,16] : [0,3,7,12,15];
+      const pat = [0,2,1,3,2,4,3,2];
+      if (st % 2 === 0) Sound.tone(mtof(root + 12 + iv[pat[(st / 2) % 8]]), t, d * 2.5, 'triangle', 0.07, Sound.music);
+      if (st === 0 || st === 8) Sound.tone(mtof(root - 24), t, d * 7, 'sine', 0.2, Sound.music);
+      if (st % 4 === 2) Sound.noise(t, 0.03, 0.025, 8000, Sound.music);
+      if (st % 4 === 0) Sound.tone(2400, t, 0.02, 'sine', 0.03, Sound.music);
+    }
+  }
+};
+let seq = null;
+function startMusic(name) {
+  stopMusic();
+  if (!S().music || !Sound.init()) return;
+  const c = Sound.ctx;
+  Sound.music.gain.cancelScheduledValues(c.currentTime);
+  Sound.music.gain.setValueAtTime(0.8, c.currentTime);
+  seq = { song: SONGS[name], step: 0, next: c.currentTime + 0.05 };
+  seq.timer = setInterval(() => {
+    const spb = 60 / seq.song.bpm / 4;
+    while (seq.next < c.currentTime + 0.12) { seq.song.play(seq.step, seq.next, spb); seq.next += spb; seq.step++; }
+  }, 25);
+}
+function stopMusic() {
+  if (seq) { clearInterval(seq.timer); seq = null; }
+  if (Sound.ctx) Sound.music.gain.setTargetAtTime(0, Sound.ctx.currentTime, 0.04);
+}
+
+/* ---------- Wheel ---------- */
+const canvas = $('wheel'), g = canvas.getContext('2d');
+let rotation = -Math.PI / 2, spinning = false, dpr = 1;
+function colorFor(i, n) {
+  let c = i % COLORS.length;
+  if (n > 1 && i === n - 1 && c === 0) c = 3;
+  return COLORS[c];
+}
+function sizeCanvas() {
+  dpr = window.devicePixelRatio || 1;
+  const w = canvas.getBoundingClientRect().width;
+  canvas.width = canvas.height = Math.max(1, Math.round(w * dpr));
+  drawWheel();
+}
+function fitText(text, maxW) {
+  if (g.measureText(text).width <= maxW) return text;
+  let t = text;
+  while (t.length > 1 && g.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+  return t + '…';
+}
+function drawWheel() {
+  const names = cls().students, n = names.length, W = canvas.width, c = W / 2, R = c - 8 * dpr;
+  g.clearRect(0, 0, W, W);
+  if (R <= 0) return;
+  if (!n) {
+    g.beginPath(); g.arc(c, c, R, 0, TAU); g.fillStyle = '#f3eefc'; g.fill();
+    g.lineWidth = 10 * dpr; g.strokeStyle = '#2b2340'; g.stroke();
+    g.fillStyle = '#7c7392'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = `600 ${Math.round(R * 0.08)}px Fredoka, sans-serif`;
+    g.fillText(cls().called.length ? 'Everyone picked! 🎉' : 'Add students to begin', c, c + R * 0.33);
+    return;
+  }
+  const arc = TAU / n;
+  for (let i = 0; i < n; i++) {
+    const a0 = rotation + i * arc;
+    g.beginPath(); g.moveTo(c, c); g.arc(c, c, R, a0, a0 + arc); g.closePath();
+    g.fillStyle = colorFor(i, n); g.fill();
+    if (n > 1) { g.lineWidth = 2 * dpr; g.strokeStyle = 'rgba(255,255,255,.9)'; g.stroke(); }
+    g.save(); g.translate(c, c); g.rotate(a0 + arc / 2);
+    const fs = Math.max(9 * dpr, Math.min(R * 0.1, arc * R * 0.42));
+    g.font = `600 ${fs}px Fredoka, sans-serif`;
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    g.fillStyle = '#fff'; g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 4 * dpr;
+    g.fillText(fitText(names[i], R * 0.66), R - 18 * dpr, 0);
+    g.restore();
+  }
+  g.beginPath(); g.arc(c, c, R, 0, TAU); g.lineWidth = 10 * dpr; g.strokeStyle = '#2b2340'; g.stroke();
+  if (n > 1 && n <= 60) {
+    for (let i = 0; i < n; i++) {
+      const a = rotation + i * arc;
+      g.beginPath(); g.arc(c + Math.cos(a) * R, c + Math.sin(a) * R, 5 * dpr, 0, TAU);
+      g.fillStyle = '#ffd166'; g.fill();
+    }
+  }
+}
+function pointerIndex() {
+  const n = cls().students.length; if (!n) return -1;
+  const a = ((-Math.PI / 2 - rotation) % TAU + TAU) % TAU;
+  return Math.floor(a / (TAU / n)) % n;
+}
+function wiggle() {
+  const p = $('pointer'); p.classList.remove('wiggle'); void p.offsetWidth; p.classList.add('wiggle');
+}
+function spin() {
+  if (spinning || $('qaOverlay').classList.contains('show')) return;
+  const n = cls().students.length;
+  if (!n) { toast(cls().called.length ? 'Everyone has been picked! Put them back to go again.' : 'Add some students first ✏️'); return; }
+  Sound.init();
+  timerPause();
+  spinning = true; setBusy(true);
+  pick = null; renderPick('Spinning…');
+  startMusic('spin');
+  const start = rotation, extra = TAU * (5 + Math.random() * 3) + Math.random() * TAU;
+  const dur = 5200 + Math.random() * 1500, t0 = performance.now();
+  let last = pointerIndex();
+  function frame(now) {
+    const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 4);
+    rotation = start + extra * e; drawWheel();
+    const idx = pointerIndex();
+    if (idx !== last) { last = idx; Sound.tick(); wiggle(); }
+    if (p < 1) requestAnimationFrame(frame); else finishSpin();
+  }
+  requestAnimationFrame(frame);
+}
+function finishSpin() {
+  rotation %= TAU; spinning = false; setBusy(false); stopMusic();
+  const c = cls(), idx = pointerIndex(), name = c.students[idx];
+  let removed = false;
+  if (S().removeAfter) { c.students.splice(idx, 1); c.called.push(name); removed = true; save(); }
+  pick = { name, removed, result: null };
+  Sound.fanfare(); confetti();
+  render();
+  renderPick();
+  const card = $('studentCard');
+  card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash');
+  $('pickedName').classList.remove('pop'); void $('pickedName').offsetWidth; $('pickedName').classList.add('pop');
+  if (window.innerWidth <= 1250) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  timerReset();
+  if (S().autoTimer) setTimeout(() => { if (pick && pick.name === name && !timer.running && !spinning) timerStart(); }, 1300);
+}
+function setBusy(b) {
+  ['spinBtn','hubBtn','addBtn','shuffleBtn','clearBtn','resetBtn','classSelect','newClass','deleteClass','renameClass','importBtn','qaBtn']
+    .forEach(id => $(id).disabled = b);
+}
+
+/* ---------- Picked student + result ---------- */
+let pick = null;
+function renderPick(label) {
+  const el = $('pickedName');
+  if (pick) {
+    el.textContent = pick.name; el.classList.remove('none');
+    $('pickLabel').textContent = cls().questions.length ? '🎉 Answer the question:' : "🎉 It's your turn!";
+  } else {
+    el.textContent = '?'; el.classList.add('none');
+    $('pickLabel').textContent = label || 'Spin to choose who answers';
+  }
+  const done = !pick || !!pick.result;
+  $('markCorrect').disabled = done;
+  $('markWrong').disabled = done;
+  $('putBack').disabled = !pick || !pick.removed;
+  const note = $('resultNote');
+  note.className = 'result-note';
+  if (pick && pick.result === 'correct') { note.textContent = `✓ ${pick.name} got it right!`; note.classList.add('ok'); }
+  else if (pick && pick.result === 'incorrect') { note.textContent = `✗ Not quite — spin for someone else to try`; note.classList.add('no'); }
+  else note.textContent = '';
+}
+function mark(result) {
+  if (!pick || pick.result) return;
+  pick.result = result;
+  timerPause();
+  const c = cls(), q = c.questions[c.qIndex];
+  c.log.push({ t: new Date().toISOString(), student: pick.name, question: q ? q.q : '', result });
+  if (result === 'correct') {
+    Sound.correct(); confetti();
+    if (q) q.used = true;
+    save();
+    if (q && S().autoNextQ) setTimeout(() => { gotoQuestion(nextUnused(1)); }, 1200);
+  } else {
+    Sound.wrong(); save();
+  }
+  renderPick(); renderQA();
+}
+$('markCorrect').onclick = () => mark('correct');
+$('markWrong').onclick = () => mark('incorrect');
+$('putBack').onclick = () => {
+  if (!pick || !pick.removed) return;
+  const c = cls(), i = c.called.lastIndexOf(pick.name);
+  if (i > -1) c.called.splice(i, 1);
+  c.students.push(pick.name); pick.removed = false;
+  save(); render(); renderPick(); toast(`${pick.name} is back on the wheel`);
+};
+
+/* ---------- Timer ---------- */
+const timer = { total: 30, left: 30, running: false, iv: null, last: 0, done: false };
+const RING = 339.292;
+function timerUI() {
+  const f = timer.total ? timer.left / timer.total : 0, sec = Math.ceil(timer.left);
+  $('timerText').textContent = sec >= 60 ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : sec;
+  const ring = $('timerRing');
+  ring.style.strokeDashoffset = RING * (1 - f);
+  ring.style.stroke = f > 0.5 ? '#1dbf73' : f > 0.2 ? '#ff9f1c' : '#ef476f';
+  $('timerBox').classList.toggle('up', timer.done);
+  $('timerToggle').textContent = timer.running ? '⏸ Pause' : (timer.done ? '▶ Restart' : '▶ Start');
+}
+function timerStart() {
+  if (spinning) return;
+  Sound.init();
+  if (timer.left <= 0) { timer.left = timer.total; timer.done = false; }
+  timer.running = true; timer.last = performance.now();
+  startMusic('think');
+  clearInterval(timer.iv);
+  timer.iv = setInterval(() => {
+    const now = performance.now(), prev = Math.ceil(timer.left);
+    timer.left = Math.max(0, timer.left - (now - timer.last) / 1000); timer.last = now;
+    const sec = Math.ceil(timer.left);
+    if (sec !== prev && sec > 0 && sec <= 5) Sound.beep();
+    if (timer.left <= 0) { timer.running = false; timer.done = true; clearInterval(timer.iv); stopMusic(); Sound.buzzer(); }
+    timerUI();
+  }, 100);
+  timerUI();
+}
+function timerPause() {
+  const was = timer.running;
+  timer.running = false; clearInterval(timer.iv);
+  if (was) stopMusic();
+  timerUI();
+}
+function timerReset() { timerPause(); timer.total = timer.left = S().timer; timer.done = false; timerUI(); }
+$('timerToggle').onclick = () => timer.running ? timerPause() : timerStart();
+$('timerReset').onclick = timerReset;
+$('timerAdd').onclick = () => { timer.left += 15; timer.total = Math.max(timer.total, timer.left); timer.done = false; timerUI(); };
+
+/* ---------- Questions ---------- */
+let answerShown = false;
+function renderQA() {
+  const c = cls(), qs = c.questions, q = qs[c.qIndex];
+  const txt = $('qText'), ans = $('qAnswer');
+  if (!q) {
+    txt.textContent = 'No questions yet. Click ❓ Q/A at the top to add some, or use “Ask my own”.';
+    txt.classList.add('empty-q');
+    $('qNum').textContent = '';
+    $('qUsed').hidden = true;
+    ans.hidden = true;
+  } else {
+    txt.textContent = q.q; txt.classList.remove('empty-q');
+    $('qNum').textContent = `${c.qIndex + 1} / ${qs.length}`;
+    $('qUsed').hidden = !q.used;
+    ans.textContent = q.a ? 'Answer: ' + q.a : 'No answer saved for this question.';
+    ans.hidden = !answerShown;
+  }
+  $('showAns').disabled = !q;
+  $('showAns').textContent = answerShown ? '🙈 Hide answer' : '👁 Show answer';
+  ['qPrev','qNext','qRand'].forEach(id => $(id).disabled = qs.length < 2);
+  if ($('qaOverlay').classList.contains('show')) renderQList();
+}
+function gotoQuestion(i) {
+  const c = cls(); if (!c.questions.length) return;
+  c.qIndex = ((i % c.questions.length) + c.questions.length) % c.questions.length;
+  answerShown = false; save(); renderQA();
+}
+function nextUnused(dir) {
+  const c = cls(), n = c.questions.length; if (!n) return 0;
+  if (S().randomQ) {
+    const pool = c.questions.map((q, i) => i).filter(i => !c.questions[i].used && i !== c.qIndex);
+    if (pool.length) return pool[Math.floor(Math.random() * pool.length)];
+  }
+  for (let k = 1; k <= n; k++) {
+    const i = (c.qIndex + dir * k + n * k) % n;
+    if (!c.questions[i].used) return i;
+  }
+  toast('All questions answered! 🎉');
+  return (c.qIndex + dir + n) % n;
+}
+$('qNext').onclick = () => gotoQuestion(cls().qIndex + 1);
+$('qPrev').onclick = () => gotoQuestion(cls().qIndex - 1);
+$('qRand').onclick = () => {
+  const c = cls(), n = c.questions.length; if (n < 2) return;
+  let i; do { i = Math.floor(Math.random() * n); } while (i === c.qIndex);
+  gotoQuestion(i);
+};
+$('showAns').onclick = () => { answerShown = !answerShown; renderQA(); };
+$('ownQBtn').onclick = () => { $('ownQ').classList.toggle('show'); if ($('ownQ').classList.contains('show')) $('ownQInput').focus(); };
+function askOwn() {
+  const v = $('ownQInput').value.trim(); if (!v) return;
+  const [q, ...a] = v.split('|');
+  const c = cls(); c.questions.push({ q: q.trim(), a: a.join('|').trim(), used: false });
+  $('ownQInput').value = ''; $('ownQ').classList.remove('show');
+  gotoQuestion(c.questions.length - 1);
+}
+$('ownQGo').onclick = askOwn;
+$('ownQInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); askOwn(); } if (e.key === 'Escape') $('ownQ').classList.remove('show'); });
+
+/* Q/A manager modal */
+function openQA() { if (spinning) return; $('qaOverlay').classList.add('show'); renderQList(); renderLog(); }
+function closeQA() { $('qaOverlay').classList.remove('show'); }
+$('qaBtn').onclick = openQA;
+$('qaClose').onclick = closeQA;
+$('qaOverlay').addEventListener('click', e => { if (e.target === $('qaOverlay')) closeQA(); });
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('active', x === b));
+  $('qTab').hidden = b.dataset.tab !== 'qTab'; $('rTab').hidden = b.dataset.tab !== 'rTab';
+  if (b.dataset.tab === 'rTab') renderLog();
+});
+function renderQList() {
+  const c = cls(), ul = $('qList'); ul.innerHTML = '';
+  if (!c.questions.length) { ul.innerHTML = '<li class="empty" style="background:none">No questions yet.</li>'; return; }
+  c.questions.forEach((q, i) => {
+    const li = document.createElement('li'); if (i === c.qIndex) li.classList.add('current');
+    li.style.cursor = 'pointer';
+    const n = document.createElement('span'); n.className = 'qn'; n.textContent = (q.used ? '✓' : (i + 1) + '.');
+    const b = document.createElement('div'); b.className = 'qb';
+    const qt = document.createElement('div'); qt.textContent = q.q; b.appendChild(qt);
+    if (q.a) { const qa = document.createElement('div'); qa.className = 'qa'; qa.textContent = '→ ' + q.a; b.appendChild(qa); }
+    const x = document.createElement('button'); x.textContent = '✕'; x.title = 'Delete question';
+    x.onclick = e => {
+      e.stopPropagation(); c.questions.splice(i, 1);
+      if (c.qIndex >= c.questions.length) c.qIndex = Math.max(0, c.questions.length - 1);
+      else if (i < c.qIndex) c.qIndex--;
+      save(); renderQA(); renderQList();
+    };
+    li.onclick = () => { gotoQuestion(i); closeQA(); };
+    li.append(n, b, x); ul.appendChild(li);
+  });
+}
+$('qAdd').onclick = () => {
+  const lines = $('qInput').value.split('\n').map(s => s.trim()).filter(Boolean);
+  if (!lines.length) { toast('Type at least one question'); return; }
+  const c = cls(), wasEmpty = !c.questions.length;
+  lines.forEach(l => { const [q, ...a] = l.split('|'); if (q.trim()) c.questions.push({ q: q.trim(), a: a.join('|').trim(), used: false }); });
+  $('qInput').value = '';
+  if (wasEmpty) c.qIndex = 0;
+  save(); renderQA(); renderQList();
+  toast(`Added ${lines.length} question${lines.length === 1 ? '' : 's'}`);
+};
+$('qInput').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('qAdd').click(); } });
+$('qResetUsed').onclick = () => { cls().questions.forEach(q => q.used = false); save(); renderQA(); renderQList(); };
+$('qClear').onclick = () => {
+  if (!cls().questions.length || !confirm('Delete all questions for this class?')) return;
+  cls().questions = []; cls().qIndex = 0; save(); renderQA(); renderQList();
+};
+function fmtTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+function renderLog() {
+  const c = cls(), body = $('logBody'); body.innerHTML = '';
+  const tally = {};
+  c.log.forEach(r => { const t = tally[r.student] = tally[r.student] || [0, 0]; t[r.result === 'correct' ? 0 : 1]++; });
+  const tl = $('tally'); tl.innerHTML = '';
+  const names = Object.keys(tally).sort((a, b) => tally[b][0] - tally[a][0] || a.localeCompare(b));
+  if (!names.length) tl.innerHTML = '<span class="empty" style="background:none">No results yet. Mark answers ✓ or ✗ after each pick.</span>';
+  names.forEach(n => { const s = document.createElement('span'); s.textContent = `${n}  ✓${tally[n][0]}  ✗${tally[n][1]}`; tl.appendChild(s); });
+  c.log.slice().reverse().forEach(r => {
+    const tr = document.createElement('tr');
+    [fmtTime(r.t), r.student, r.question || '—', r.result === 'correct' ? '✓ Correct' : '✗ Incorrect'].forEach((v, i) => {
+      const td = document.createElement('td'); td.textContent = v;
+      if (i === 3) td.style.color = r.result === 'correct' ? '#118a55' : '#c2254b';
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+}
+$('logExport').onclick = () => {
+  const c = cls(); if (!c.log.length) { toast('No results to download yet'); return; }
+  const esc = v => '"' + String(v).replace(/"/g, '""') + '"';
+  const rows = [['Date/Time','Student','Question','Result'], ...c.log.map(r => [new Date(r.t).toLocaleString(), r.student, r.question, r.result])];
+  download(rows.map(r => r.map(esc).join(',')).join('\r\n'), `results-${safeName(data.current)}-${today()}.csv`, 'text/csv');
+};
+$('logClear').onclick = () => {
+  if (!cls().log.length || !confirm('Clear all results for this class?')) return;
+  cls().log = []; save(); renderLog();
+};
+
+/* ---------- Confetti ---------- */
+function confetti() {
+  const cv = $('confetti'), cx = cv.getContext('2d');
+  cv.width = innerWidth; cv.height = innerHeight;
+  const parts = Array.from({ length: 160 }, () => ({
+    x: innerWidth / 2 + (Math.random() - .5) * 240, y: innerHeight / 2 - 60,
+    vx: (Math.random() - .5) * 16, vy: -Math.random() * 16 - 4,
+    s: 6 + Math.random() * 7, r: Math.random() * TAU, vr: (Math.random() - .5) * .3,
+    c: COLORS[Math.floor(Math.random() * COLORS.length)]
+  }));
+  const t0 = performance.now();
+  (function f(now) {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts.forEach(p => {
+      p.vy += 0.35; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c; cx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); cx.restore();
+    });
+    if (now - t0 < 3200) requestAnimationFrame(f); else cx.clearRect(0, 0, cv.width, cv.height);
+  })(t0);
+}
+
+/* ---------- Roster ---------- */
+function parseNames(text) {
+  return text.split(/[\n,;]+/).map(s => s.trim().replace(/\s+/g, ' ')).filter(Boolean);
+}
+function addNames() {
+  const names = parseNames($('nameInput').value);
+  if (!names.length) { toast('Type at least one name'); return; }
+  const c = cls(), have = new Set([...c.students, ...c.called].map(s => s.toLowerCase()));
+  let added = 0, skipped = 0;
+  names.forEach(n => { if (have.has(n.toLowerCase())) skipped++; else { c.students.push(n); have.add(n.toLowerCase()); added++; } });
+  $('nameInput').value = '';
+  save(); render();
+  toast(`Added ${added} student${added === 1 ? '' : 's'}` + (skipped ? ` (${skipped} already listed)` : ''));
+}
+$('addBtn').onclick = addNames;
+$('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addNames(); } });
+
+$('shuffleBtn').onclick = () => {
+  const a = cls().students;
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  save(); render();
+};
+$('clearBtn').onclick = () => {
+  if (!cls().students.length && !cls().called.length) return;
+  if (!confirm(`Remove all students from "${data.current}"?`)) return;
+  cls().students = []; cls().called = []; pick = null; save(); render(); renderPick();
+};
+$('resetBtn').onclick = () => {
+  const c = cls(); if (!c.called.length) return;
+  c.students.push(...c.called); c.called = [];
+  if (pick) pick.removed = false;
+  save(); render(); renderPick(); toast('Everyone is back on the wheel');
+};
+
+function render() {
+  const c = cls();
+  const sel = $('classSelect'); sel.innerHTML = '';
+  Object.keys(data.classes).forEach(k => { const o = document.createElement('option'); o.value = o.textContent = k; sel.appendChild(o); });
+  sel.value = data.current;
+  const ul = $('wheelList'); ul.innerHTML = '';
+  if (!c.students.length) ul.innerHTML = '<li class="empty" style="background:none">No students on the wheel.</li>';
+  c.students.forEach((name, i) => {
+    const li = document.createElement('li');
+    const dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = colorFor(i, c.students.length);
+    const sp = document.createElement('span'); sp.className = 'name'; sp.textContent = name;
+    const b = document.createElement('button'); b.textContent = '✕'; b.title = `Remove ${name}`;
+    b.onclick = () => { if (spinning) return; c.students.splice(i, 1); save(); render(); };
+    li.append(dot, sp, b); ul.appendChild(li);
+  });
+  const cl = $('calledList'); cl.innerHTML = '';
+  if (!c.called.length) cl.innerHTML = '<span class="empty">Nobody yet.</span>';
+  c.called.forEach((name, i) => {
+    const b = document.createElement('button'); b.className = 'chip'; b.textContent = '↩ ' + name; b.title = 'Put back on the wheel';
+    b.onclick = () => {
+      if (spinning) return; c.called.splice(i, 1); c.students.push(name);
+      if (pick && pick.name === name) pick.removed = false;
+      save(); render(); renderPick();
+    };
+    cl.appendChild(b);
+  });
+  $('wheelCount').textContent = c.students.length;
+  $('calledCount').textContent = c.called.length;
+  const n = c.students.length;
+  $('leftLabel').textContent = n ? `${n} student${n === 1 ? '' : 's'} left` : '';
+  drawWheel();
+}
+
+/* ---------- Classes ---------- */
+function switchClass() { pick = null; answerShown = false; timerReset(); render(); renderPick(); renderQA(); }
+$('classSelect').onchange = e => { data.current = e.target.value; save(); switchClass(); };
+$('newClass').onclick = () => {
+  const name = (prompt('Name for the new class (e.g. "Period 2 – Math"):') || '').trim();
+  if (!name) return;
+  if (data.classes[name]) { toast('That class already exists'); return; }
+  data.classes[name] = newClass(); data.current = name; save(); switchClass();
+};
+$('renameClass').onclick = () => {
+  const name = (prompt('Rename class:', data.current) || '').trim();
+  if (!name || name === data.current) return;
+  if (data.classes[name]) { toast('That name is already used'); return; }
+  data.classes[name] = data.classes[data.current]; delete data.classes[data.current]; data.current = name; save(); render();
+};
+$('deleteClass').onclick = () => {
+  if (!confirm(`Delete the class "${data.current}" with all its names, questions and results?`)) return;
+  delete data.classes[data.current];
+  if (!Object.keys(data.classes).length) data.classes['My Class'] = newClass();
+  data.current = Object.keys(data.classes)[0]; save(); switchClass();
+};
+const today = () => new Date().toISOString().slice(0, 10);
+const safeName = s => s.replace(/[^\w\-]+/g, '-').replace(/^-+|-+$/g, '') || 'class';
+function download(text, filename, type) {
+  const blob = new Blob([text], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$('exportBtn').onclick = () => download(JSON.stringify(data, null, 2), `spin-to-answer-backup-${today()}.json`, 'application/json');
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (!d.classes || typeof d.classes !== 'object' || !Object.keys(d.classes).length) throw 0;
+      Object.keys(d.classes).forEach(k => d.classes[k] = fixClass(d.classes[k]));
+      data = { classes: d.classes, current: d.classes[d.current] ? d.current : Object.keys(d.classes)[0], settings: Object.assign({}, DEFAULT_SETTINGS, d.settings || {}) };
+      save(); syncSettings(); switchClass(); toast('Backup restored');
+    } catch (err) { toast('That file is not a valid backup'); }
+    e.target.value = '';
+  };
+  r.readAsText(f);
+};
+
+/* ---------- Settings ---------- */
+function syncSettings() {
+  $('timerSec').value = S().timer; $('removeAfter').checked = S().removeAfter; $('autoTimer').checked = S().autoTimer;
+  $('autoNextQ').checked = S().autoNextQ; $('randomQ').checked = S().randomQ;
+  $('musicToggle').checked = S().music; $('volume').value = S().volume;
+  $('musicBtn').textContent = S().music ? '🎵 Music on' : '🔇 Music off';
+}
+$('timerSec').onchange = e => {
+  S().timer = Math.min(600, Math.max(5, parseInt(e.target.value, 10) || 30)); e.target.value = S().timer; save();
+  if (!timer.running) timerReset();
+};
+$('removeAfter').onchange = e => { S().removeAfter = e.target.checked; save(); };
+$('autoTimer').onchange = e => { S().autoTimer = e.target.checked; save(); };
+$('autoNextQ').onchange = e => { S().autoNextQ = e.target.checked; save(); };
+$('randomQ').onchange = e => { S().randomQ = e.target.checked; save(); };
+function setMusic(on) { S().music = on; save(); syncSettings(); if (!on) stopMusic(); else if (timer.running) startMusic('think'); }
+$('musicToggle').onchange = e => setMusic(e.target.checked);
+$('musicBtn').onclick = () => setMusic(!S().music);
+$('volume').oninput = e => { S().volume = parseFloat(e.target.value); Sound.setVolume(S().volume); save(); };
+
+$('fsBtn').onclick = () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+};
+
+/* ---------- Keyboard ---------- */
+$('spinBtn').onclick = spin;
+$('hubBtn').onclick = spin;
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('qaOverlay').classList.contains('show')) { closeQA(); return; }
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if (typing || e.ctrlKey || e.metaKey || e.altKey || $('qaOverlay').classList.contains('show')) return;
+  const k = e.key.toLowerCase();
+  if (e.code === 'Space') { e.preventDefault(); spin(); }
+  else if (k === 't') { timer.running ? timerPause() : timerStart(); }
+  else if (k === 'a') { $('showAns').click(); }
+  else if (k === 'n') { $('qNext').click(); }
+});
+window.addEventListener('resize', sizeCanvas);
+if (window.ResizeObserver) new ResizeObserver(sizeCanvas).observe(canvas);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawWheel);
+
+syncSettings();
+render();
+renderPick();
+renderQA();
+timerReset();
+sizeCanvas();
+})();
+</script>
+</body>
+</html>
